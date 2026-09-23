@@ -56,3 +56,4 @@ function copyCaption() {
         alert("Gagal menyalin caption.");
     });
 }
+ 
