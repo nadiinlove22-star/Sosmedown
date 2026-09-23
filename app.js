@@ -1,6 +1,5 @@
-function handleGenerate() {
+async function handleGenerate() {
     const urlInput = document.getElementById('url-input').value.trim();
-    const platform = document.getElementById('platform-select').value;
     const resultContainer = document.getElementById('result-container');
     const generateBtn = document.getElementById('generate-btn');
 
@@ -9,38 +8,62 @@ function handleGenerate() {
         return;
     }
 
-    // Ubah status tombol jadi memproses
     generateBtn.disabled = true;
-    generateBtn.innerText = "Memproses Media...";
+    generateBtn.innerText = "Menghubungkan ke Server...";
 
-    // Simulasi proses mengambil data (nantinya bisa dihubungkan ke API Downloader)
-    setTimeout(() => {
-        // Tampilkan kotak hasil
+    try {
+        // Contoh menggunakan endpoint publik/open-source (seperti Cobalt API)
+        const response = await fetch('https://api.cobalt.tools/api/json', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: urlInput,
+                vQuality: 'max' // Meminta kualitas tertinggi
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'error' || !data.url) {
+            throw new Error(data.text || "Gagal memproses tautan. Pastikan URL valid.");
+        }
+
+        // Tampilkan hasil unduhan dari respons API
         resultContainer.classList.remove('hidden');
 
-        // Contoh data tiruan (mock data) yang nantinya diganti dengan hasil respons API asli
-        document.getElementById('download-video-btn').href = "#";
-        document.getElementById('download-audio-btn').href = "#";
-        document.getElementById('download-sub-btn').href = "#";
-        document.getElementById('caption-box').value = "Ini adalah contoh teks caption otomatis dari postingan yang kamu masukkan! #Sosmedown #Downloader";
+        // Link Download Video Utama
+        document.getElementById('download-video-btn').href = data.url;
+        
+        // Jika API menyediakan audio terpisah atau fitur lain
+        document.getElementById('download-audio-btn').href = data.audio || data.url;
+        
+        // Sembunyikan atau sesuaikan tombol subtitle jika tidak tersedia dari API
+        document.getElementById('download-sub-btn').href = data.picker ? data.picker[0].url : data.url;
 
-        // Kembalikan tombol ke semula
+        // Tampilkan caption jika tersedia, atau info default
+        document.getElementById('caption-box').value = data.filename || "Berhasil mengambil media dari Sosmedown!";
+
+        resultContainer.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+        alert("Terjadi kesalahan: " + err.message);
+    } finally {
         generateBtn.disabled = false;
         generateBtn.innerText = "Generate Media";
-
-        // Gulir layar otomatis ke bagian hasil
-        resultContainer.scrollIntoView({ behavior: 'smooth' });
-    }, 1500);
+    }
 }
 
 function copyCaption() {
     const captionBox = document.getElementById('caption-box');
     captionBox.select();
-    captionBox.setSelectionRange(0, 99999); // Untuk perangkat mobile
+    captionBox.setSelectionRange(0, 99999);
 
     navigator.clipboard.writeText(captionBox.value).then(() => {
         alert("Caption berhasil disalin ke clipboard!");
-    }).catch(err => {
+    }).catch(() => {
         alert("Gagal menyalin caption.");
     });
 }
