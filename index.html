@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sosmedown - Downloader Media Sosial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-xl text-center py-6">
+        <h1 class="text-2xl font-bold text-emerald-400">Sosmedown</h1>
+        <p class="text-xs text-slate-400 mt-1">Download video, audio, subtitle, dan caption tanpa login!</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-xl bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
+        
+        <!-- Input Link -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-slate-300">Tempel Tautan (URL) Sosmed</label>
+            <input type="text" id="url-input" placeholder="https://www.instagram.com/reel/... atau TikTok/YouTube" 
+                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <!-- Pilih Platform -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-slate-300">Pilih Platform</label>
+            <select id="platform-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500">
+                <option value="auto">Otomatis Deteksi</option>
+                <option value="instagram">Instagram (Reels/Post)</option>
+                <option value="tiktok">TikTok</option>
+                <option value="youtube">YouTube (Video/Shorts)</option>
+            </select>
+        </div>
+
+        <!-- Tombol Generate -->
+        <button onclick="handleGenerate()" id="generate-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg mt-2">
+            Generate Media
+        </button>
+    </main>
+
+    <!-- Hasil Output (Hidden Awalnya) -->
+    <div id="result-container" class="w-full max-w-xl bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl mt-4 hidden flex flex-col gap-4">
+        <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider border-b border-slate-800 pb-2">Hasil Unduhan & Informasi</h3>
+        
+        <!-- Video HD -->
+        <div class="flex flex-col gap-1">
+            <span class="text-[11px] text-slate-400 font-medium">Video Kualitas Tertinggi (HD)</span>
+            <a id="download-video-btn" href="#" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 p-2.5 rounded-lg text-xs font-semibold text-center transition">
+                ⬇ Download Video (MP4)
+            </a>
+        </div>
+
+        <!-- Audio Saja -->
+        <div class="flex flex-col gap-1">
+            <span class="text-[11px] text-slate-400 font-medium">Audio Saja</span>
+            <a id="download-audio-btn" href="#" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 p-2.5 rounded-lg text-xs font-semibold text-center transition">
+                🎵 Download Audio (MP3)
+            </a>
+        </div>
+
+        <!-- Subtitle -->
+        <div class="flex flex-col gap-1">
+            <span class="text-[11px] text-slate-400 font-medium">Subtitle</span>
+            <a id="download-sub-btn" href="#" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 p-2.5 rounded-lg text-xs font-semibold text-center transition">
+                📜 Download Subtitle (SRT)
+            </a>
+        </div>
+
+        <!-- Caption Box -->
+        <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center">
+                <span class="text-[11px] text-slate-400 font-medium">Caption Postingan</span>
+                <button onclick="copyCaption()" class="text-[10px] text-emerald-400 hover:underline">Salin Caption</button>
+            </div>
+            <textarea id="caption-box" readonly class="w-full h-24 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 resize-none focus:outline-none"></textarea>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-6 text-[10px] text-slate-600">
+        Sosmedown &copy; 2026 - All rights reserved.
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
