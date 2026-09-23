@@ -12,44 +12,33 @@ async function handleGenerate() {
     generateBtn.innerText = "Menghubungkan ke Server...";
 
     try {
-        // Contoh menggunakan endpoint publik/open-source (seperti Cobalt API)
-        const response = await fetch('https://api.cobalt.tools/api/json', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                url: urlInput,
-                vQuality: 'max' // Meminta kualitas tertinggi
-            })
-        });
+        // Menggunakan layanan API publik alternatif yang stabil untuk frontend web
+        const apiURL = `https://apis.davidcyriltech.my.id/download?url=${encodeURIComponent(urlInput)}`;
+        
+        const response = await fetch(apiURL);
+        const json = await response.json();
 
-        const data = await response.json();
-
-        if (data.status === 'error' || !data.url) {
-            throw new Error(data.text || "Gagal memproses tautan. Pastikan URL valid.");
+        if (!json || (!json.download_url && !json.url && !json.video)) {
+            throw new Error("Gagal mengambil data. Pastikan link yang dimasukkan benar dan publik.");
         }
 
-        // Tampilkan hasil unduhan dari respons API
+        // Ambil link hasil dari respons API
+        const mediaLink = json.download_url || json.url || json.video;
+
+        // Tampilkan hasil unduhan ke antarmuka
         resultContainer.classList.remove('hidden');
 
-        // Link Download Video Utama
-        document.getElementById('download-video-btn').href = data.url;
+        document.getElementById('download-video-btn').href = mediaLink;
+        document.getElementById('download-audio-btn').href = json.audio || mediaLink;
+        document.getElementById('download-sub-btn').href = mediaLink;
         
-        // Jika API menyediakan audio terpisah atau fitur lain
-        document.getElementById('download-audio-btn').href = data.audio || data.url;
-        
-        // Sembunyikan atau sesuaikan tombol subtitle jika tidak tersedia dari API
-        document.getElementById('download-sub-btn').href = data.picker ? data.picker[0].url : data.url;
-
-        // Tampilkan caption jika tersedia, atau info default
-        document.getElementById('caption-box').value = data.filename || "Berhasil mengambil media dari Sosmedown!";
+        // Tampilkan caption jika ada dari API
+        document.getElementById('caption-box').value = json.caption || json.title || "Berhasil memproses media melalui Sosmedown!";
 
         resultContainer.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-        alert("Terjadi kesalahan: " + err.message);
+        alert("Gagal memproses tautan: " + err.message + "\n\nTips: Coba gunakan tautan lain atau pastikan postingan tidak diprivate.");
     } finally {
         generateBtn.disabled = false;
         generateBtn.innerText = "Generate Media";
