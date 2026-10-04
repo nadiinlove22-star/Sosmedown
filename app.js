@@ -51,34 +51,28 @@ document.addEventListener("DOMContentLoaded", () => {
         resultContainer.classList.add("hidden");
 
         try {
-            // Menggunakan CORS proxy publik agar bisa diakses dari GitHub Pages tanpa terblokir
-            const targetUrl = `https://tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
-            const proxyEndpoint = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            // Menggunakan endpoint API publik alternatif yang mendukung CORS langsung
+            const apiEndpoint = `https://tdownv4.sl-bjs.workers.dev/?down=${encodeURIComponent(url)}`;
             
-            const response = await fetch(proxyEndpoint);
-            const proxyJson = await response.json();
-            
-            if (!proxyJson.contents) {
-                throw new Error("Gagal terhubung ke server data.");
-            }
+            const response = await fetch(apiEndpoint);
+            const resJson = await response.json();
 
-            const resJson = JSON.parse(proxyJson.contents);
+            // Memastikan data berhasil ditarik dari API
+            if (resJson && (resJson.data || resJson.video || resJson.nowm)) {
+                // Menyesuaikan struktur data dari worker publik
+                const data = resJson.data || resJson;
 
-            if (resJson.code === 0 && resJson.data) {
-                const data = resJson.data;
+                videoThumbnail.src = data.cover || data.thumbnail || data.origin_cover || "";
+                videoTitle.textContent = data.title || data.desc || "Video TikTok Tanpa Watermark";
+                statViews.textContent = data.play_count || data.views || 0;
+                statLikes.textContent = data.digg_count || data.likes || 0;
 
-                // Masukkan data ke elemen UI
-                videoThumbnail.src = data.cover || data.origin_cover;
-                videoTitle.textContent = data.title || "Video TikTok Tanpa Watermark";
-                statViews.textContent = data.play_count || 0;
-                statLikes.textContent = data.digg_count || 0;
-
-                // Set link download langsung
-                downloadNoWatermark.href = data.hdplay || data.play; 
-                downloadAudio.href = data.music;       
+                // Set link download video & audio
+                downloadNoWatermark.href = data.nowm || data.hdplay || data.play || "#"; 
+                downloadAudio.href = data.music || data.audio || "#";       
 
                 // Set caption dan hashtag
-                captionText.value = data.title || "Tidak ada caption.";
+                captionText.value = data.title || data.desc || "Tidak ada caption.";
 
                 // Set subtitle jika tersedia
                 if (data.subtitle) {
@@ -90,13 +84,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadingDiv.classList.add("hidden");
                 resultContainer.classList.remove("hidden");
             } else {
-                throw new Error("Gagal mengambil data video. Pastikan video bersifat publik dan link benar.");
+                throw new Error("Format data API tidak valid.");
             }
 
         } catch (error) {
             console.error(error);
             loadingDiv.classList.add("hidden");
-            alert("Terjadi kesalahan koneksi atau server API sedang sibuk. Coba beberapa saat lagi.");
+            alert("Gagal memproses video. Pastikan link TikTok bersifat publik dan aktif.");
         }
     });
 
