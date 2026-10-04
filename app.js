@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const copyCaptionBtn = document.getElementById("copyCaptionBtn");
     const copySubtitleBtn = document.getElementById("copySubtitleBtn");
 
-    // Fungsi tombol Paste otomatis
+    // Tombol Paste otomatis dari clipboard
     pasteBtn.addEventListener("click", async () => {
         try {
             const text = await navigator.clipboard.readText();
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Validasi format link TikTok (Mendukung link web utama maupun shortened link vt.tiktok.com)
+    // Validasi format link TikTok
     function isValidTikTokUrl(url) {
         const tiktokRegex = /(https?:\/\/)?(www\.)?(tiktok\.com|m\.tiktok\.com|vt\.tiktok\.com)\/.+/;
         return tiktokRegex.test(url);
@@ -51,10 +51,18 @@ document.addEventListener("DOMContentLoaded", () => {
         resultContainer.classList.add("hidden");
 
         try {
-            const apiEndpoint = `https://tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
+            // Menggunakan CORS proxy publik agar bisa diakses dari GitHub Pages tanpa terblokir
+            const targetUrl = `https://tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
+            const proxyEndpoint = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
             
-            const response = await fetch(apiEndpoint);
-            const resJson = await response.json();
+            const response = await fetch(proxyEndpoint);
+            const proxyJson = await response.json();
+            
+            if (!proxyJson.contents) {
+                throw new Error("Gagal terhubung ke server data.");
+            }
+
+            const resJson = JSON.parse(proxyJson.contents);
 
             if (resJson.code === 0 && resJson.data) {
                 const data = resJson.data;
@@ -72,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Set caption dan hashtag
                 captionText.value = data.title || "Tidak ada caption.";
 
-                // Set subtitle jika tersedia dari sistem
+                // Set subtitle jika tersedia
                 if (data.subtitle) {
                     subtitleText.value = data.subtitle;
                 } else {
