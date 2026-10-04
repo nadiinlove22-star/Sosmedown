@@ -1,59 +1,114 @@
-async function handleGenerate() {
-    const urlInput = document.getElementById('url-input').value.trim();
-    const resultContainer = document.getElementById('result-container');
-    const generateBtn = document.getElementById('generate-btn');
+document.addEventListener("DOMContentLoaded", () => {
+    const tiktokUrlInput = document.getElementById("tiktokUrl");
+    const pasteBtn = document.getElementById("pasteBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const loadingDiv = document.getElementById("loading");
+    const resultContainer = document.getElementById("resultContainer");
+    
+    const videoThumbnail = document.getElementById("videoThumbnail");
+    const videoTitle = document.getElementById("videoTitle");
+    const statViews = document.getElementById("statViews");
+    const statLikes = document.getElementById("statLikes");
+    const downloadNoWatermark = document.getElementById("downloadNoWatermark");
+    const downloadAudio = document.getElementById("downloadAudio");
+    
+    const captionText = document.getElementById("captionText");
+    const subtitleText = document.getElementById("subtitleText");
+    const copyCaptionBtn = document.getElementById("copyCaptionBtn");
+    const copySubtitleBtn = document.getElementById("copySubtitleBtn");
 
-    if (!urlInput) {
-        alert("Silakan masukkan tautan (URL) media sosial terlebih dahulu!");
-        return;
+    // Fungsi tombol Paste otomatis
+    pasteBtn.addEventListener("click", async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            tiktokUrlInput.value = text;
+        } catch (err) {
+            alert("Gagal membaca clipboard. Silakan tempel secara manual.");
+        }
+    });
+
+    // Validasi format link TikTok (Mendukung link web utama maupun shortened link vt.tiktok.com)
+    function isValidTikTokUrl(url) {
+        const tiktokRegex = /(https?:\/\/)?(www\.)?(tiktok\.com|m\.tiktok\.com|vt\.tiktok\.com)\/.+/;
+        return tiktokRegex.test(url);
     }
 
-    generateBtn.disabled = true;
-    generateBtn.innerText = "Menghubungkan ke Server...";
+    // Eksekusi Tombol Proses
+    downloadBtn.addEventListener("click", async () => {
+        const url = tiktokUrlInput.value.trim();
 
-    try {
-        // Menggunakan layanan API publik alternatif yang stabil untuk frontend web
-        const apiURL = `https://apis.davidcyriltech.my.id/download?url=${encodeURIComponent(urlInput)}`;
-        
-        const response = await fetch(apiURL);
-        const json = await response.json();
-
-        if (!json || (!json.download_url && !json.url && !json.video)) {
-            throw new Error("Gagal mengambil data. Pastikan link yang dimasukkan benar dan publik.");
+        if (!url) {
+            alert("Mohon masukkan tautan video TikTok terlebih dahulu!");
+            return;
         }
 
-        // Ambil link hasil dari respons API
-        const mediaLink = json.download_url || json.url || json.video;
+        if (!isValidTikTokUrl(url)) {
+            alert("Tautan yang Anda masukkan tidak valid! Pastikan itu adalah tautan resmi dari TikTok.");
+            return;
+        }
 
-        // Tampilkan hasil unduhan ke antarmuka
-        resultContainer.classList.remove('hidden');
+        loadingDiv.classList.remove("hidden");
+        resultContainer.classList.add("hidden");
 
-        document.getElementById('download-video-btn').href = mediaLink;
-        document.getElementById('download-audio-btn').href = json.audio || mediaLink;
-        document.getElementById('download-sub-btn').href = mediaLink;
-        
-        // Tampilkan caption jika ada dari API
-        document.getElementById('caption-box').value = json.caption || json.title || "Berhasil memproses media melalui Sosmedown!";
+        try {
+            const apiEndpoint = `https://tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
+            
+            const response = await fetch(apiEndpoint);
+            const resJson = await response.json();
 
-        resultContainer.scrollIntoView({ behavior: 'smooth' });
+            if (resJson.code === 0 && resJson.data) {
+                const data = resJson.data;
 
-    } catch (err) {
-        alert("Gagal memproses tautan: " + err.message + "\n\nTips: Coba gunakan tautan lain atau pastikan postingan tidak diprivate.");
-    } finally {
-        generateBtn.disabled = false;
-        generateBtn.innerText = "Generate Media";
-    }
-}
+                // Masukkan data ke elemen UI
+                videoThumbnail.src = data.cover || data.origin_cover;
+                videoTitle.textContent = data.title || "Video TikTok Tanpa Watermark";
+                statViews.textContent = data.play_count || 0;
+                statLikes.textContent = data.digg_count || 0;
 
-function copyCaption() {
-    const captionBox = document.getElementById('caption-box');
-    captionBox.select();
-    captionBox.setSelectionRange(0, 99999);
+                // Set link download langsung
+                downloadNoWatermark.href = data.hdplay || data.play; 
+                downloadAudio.href = data.music;       
 
-    navigator.clipboard.writeText(captionBox.value).then(() => {
-        alert("Caption berhasil disalin ke clipboard!");
-    }).catch(() => {
-        alert("Gagal menyalin caption.");
+                // Set caption dan hashtag
+                captionText.value = data.title || "Tidak ada caption.";
+
+                // Set subtitle jika tersedia dari sistem
+                if (data.subtitle) {
+                    subtitleText.value = data.subtitle;
+                } else {
+                    subtitleText.value = "Subtitle/transkrip otomatis tidak tersedia untuk video ini.";
+                }
+
+                loadingDiv.classList.add("hidden");
+                resultContainer.classList.remove("hidden");
+            } else {
+                throw new Error("Gagal mengambil data video. Pastikan video bersifat publik dan link benar.");
+            }
+
+        } catch (error) {
+            console.error(error);
+            loadingDiv.classList.add("hidden");
+            alert("Terjadi kesalahan koneksi atau server API sedang sibuk. Coba beberapa saat lagi.");
+        }
     });
-}
- 
+
+    // Fungsi Salin Caption
+    copyCaptionBtn.addEventListener("click", () => {
+        if (!captionText.value) return;
+        navigator.clipboard.writeText(captionText.value);
+        copyCaptionBtn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
+        setTimeout(() => {
+            copyCaptionBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Salin Teks';
+        }, 2000);
+    });
+
+    // Fungsi Salin Subtitle
+    copySubtitleBtn.addEventListener("click", () => {
+        if (!subtitleText.value) return;
+        navigator.clipboard.writeText(subtitleText.value);
+        copySubtitleBtn.innerHTML = '<i class="fa-solid fa-check"></i> Tersalin!';
+        setTimeout(() => {
+            copySubtitleBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Salin Subtitle';
+        }, 2000);
+    });
+});
